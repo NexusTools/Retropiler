@@ -14,7 +14,7 @@
  * along with Retropiler.  If not, see <http://www.gnu.org/licenses/>.
  * 
  */
-package jebscript2;
+package net.nexustools.jebscript2;
 
 import java.awt.Component;
 import java.io.IOException;

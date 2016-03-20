@@ -14,7 +14,7 @@
  * along with Retropiler.  If not, see <http://www.gnu.org/licenses/>.
  * 
  */
-package jebscript2;
+package net.nexustools.jebscript2;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -112,8 +112,12 @@ public class UI extends javax.swing.JFrame {
         jMenuItem3 = new javax.swing.JMenuItem();
         jMenuItem4 = new javax.swing.JMenuItem();
         jMenuItem5 = new javax.swing.JMenuItem();
-        jMenuItem11 = new javax.swing.JMenuItem();
-        jMenuItem6 = new javax.swing.JMenuItem();
+        jSeparator1 = new javax.swing.JPopupMenu.Separator();
+        jMenuItem13 = new javax.swing.JMenuItem();
+        mnuConnect = new javax.swing.JMenu();
+        mnuDisconnect = new javax.swing.JMenuItem();
+        jMenuItem14 = new javax.swing.JMenuItem();
+        mnuExecute = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
         jMenuItem9 = new javax.swing.JMenuItem();
         jMenuItem10 = new javax.swing.JMenuItem();
@@ -160,24 +164,37 @@ public class UI extends javax.swing.JFrame {
             }
         });
         jMenu1.add(jMenuItem5);
+        jMenu1.add(jSeparator1);
 
-        jMenuItem11.setText("Execute");
-        jMenuItem11.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jMenuItem11ActionPerformed(evt);
-            }
-        });
-        jMenu1.add(jMenuItem11);
-
-        jMenuItem6.setText("Connect...");
-        jMenuItem6.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jMenuItem6ActionPerformed(evt);
-            }
-        });
-        jMenu1.add(jMenuItem6);
+        jMenuItem13.setText("Quit");
+        jMenu1.add(jMenuItem13);
 
         jMenuBar1.add(jMenu1);
+
+        mnuConnect.setText("kOS");
+
+        mnuDisconnect.setText("Connect...");
+        mnuDisconnect.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuDisconnectActionPerformed(evt);
+            }
+        });
+        mnuConnect.add(mnuDisconnect);
+
+        jMenuItem14.setText("Disconnect");
+        jMenuItem14.setEnabled(false);
+        mnuConnect.add(jMenuItem14);
+
+        mnuExecute.setText("Execute");
+        mnuExecute.setEnabled(false);
+        mnuExecute.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuExecuteActionPerformed(evt);
+            }
+        });
+        mnuConnect.add(mnuExecute);
+
+        jMenuBar1.add(mnuConnect);
 
         jMenu2.setText("Edit");
 
@@ -237,11 +254,11 @@ public class UI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jMenuItem6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem6ActionPerformed
+    private void mnuDisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDisconnectActionPerformed
         KOSConnect p = new KOSConnect(this);
         p.setLocationRelativeTo(this);
         p.setVisible(true);
-    }//GEN-LAST:event_jMenuItem6ActionPerformed
+    }//GEN-LAST:event_mnuDisconnectActionPerformed
 
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
 
@@ -277,9 +294,8 @@ public class UI extends javax.swing.JFrame {
 
     private void jMenuItem5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem5ActionPerformed
         // TODO add your handling code here:
-        if(workFile == null){
+        if(workFile == null)
             pickSaveFile();
-        }
         save();
     }//GEN-LAST:event_jMenuItem5ActionPerformed
 
@@ -291,14 +307,13 @@ public class UI extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jMenuItem12ActionPerformed
 
-    private void jMenuItem11ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem11ActionPerformed
-        if(connected)
+    private void mnuExecuteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuExecuteActionPerformed
         try {
             KOSInterface.exec(Parser.compile(textarea.getText()));
         } catch (IOException ex) {
             Logger.getLogger(UI.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }//GEN-LAST:event_jMenuItem11ActionPerformed
+    }//GEN-LAST:event_mnuExecuteActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton5;
@@ -309,23 +324,34 @@ public class UI extends javax.swing.JFrame {
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem10;
-    private javax.swing.JMenuItem jMenuItem11;
     private javax.swing.JMenuItem jMenuItem12;
+    private javax.swing.JMenuItem jMenuItem13;
+    private javax.swing.JMenuItem jMenuItem14;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JMenuItem jMenuItem5;
-    private javax.swing.JMenuItem jMenuItem6;
     private javax.swing.JMenuItem jMenuItem7;
     private javax.swing.JMenuItem jMenuItem8;
     private javax.swing.JMenuItem jMenuItem9;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JPopupMenu.Separator jSeparator1;
+    private javax.swing.JMenu mnuConnect;
+    private javax.swing.JMenuItem mnuDisconnect;
+    private javax.swing.JMenuItem mnuExecute;
     // End of variables declaration//GEN-END:variables
     
     boolean connected = false;
     
     void connected() {
         jMenu4.setText("Status: Connected");
+        mnuConnect.setEnabled(false);
+        mnuDisconnect.setEnabled(true);
         connected = true;
     }
+    
+    void disconnect() {
+        // TODO: Implement
+    }
+    
 }
