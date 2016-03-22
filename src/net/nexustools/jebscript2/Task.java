@@ -79,6 +79,15 @@ public abstract class Task {
         SwingUtilities.invokeLater(run);
     }
     
+    public final void completeProgress() {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                dialog.setVisible(false);
+            }
+        });
+    }
+    
     public final void run() {
         if(dialog != null)
             dialog.setVisible(true);

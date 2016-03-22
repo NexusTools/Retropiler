@@ -19,6 +19,8 @@ package net.nexustools.jebscript2;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -26,7 +28,7 @@ import javax.swing.event.DocumentListener;
  *
  * @author aero
  */
-public class KOSConnect extends javax.swing.JFrame {
+public class KOSConnect extends javax.swing.JDialog {
 
     /**
      * Creates new form Prefs
@@ -34,32 +36,11 @@ public class KOSConnect extends javax.swing.JFrame {
     
     UI ui;
     public KOSConnect(UI base) {
+        super(base);
+        setTitle("Connect to kOS");
+        
         ui=base;
         initComponents();
-//        jTextField1.getDocument().addDocumentListener(new DocumentListener() {
-//            @Override public void changedUpdate(DocumentEvent e) {upd();}
-//            @Override public void insertUpdate(DocumentEvent e) {upd();}
-//            @Override public void removeUpdate(DocumentEvent e) {upd();}
-//            
-//            void upd(){
-//                KOSInterface.cpuid = jTextField1.getText();
-//            }
-//        });
-//        
-//        jTextField2.getDocument().addDocumentListener(new DocumentListener() {
-//            @Override public void changedUpdate(DocumentEvent e) {upd();}
-//            @Override public void insertUpdate(DocumentEvent e) {upd();}
-//            @Override public void removeUpdate(DocumentEvent e) {upd();}
-//            
-//            void upd(){
-//                String[] bits = jTextField2.getText().split("\\:");
-//                if(bits.length == 2){
-//                    KOSInterface.ip = bits[0];
-//                    KOSInterface.port = Integer.parseInt(bits[1]);
-//                }
-////                KOSInterface.cpuid = jTextField1.getText();
-//            }
-//        });
 
     }
 
@@ -201,37 +182,54 @@ public class KOSConnect extends javax.swing.JFrame {
         }
         KOSInterface.cpuid = jTextField1.getText();
         jLabel3.setText("Status: Connecting...");
-        new Thread(new Runnable() {
+        
+        
+        new Task(this, "Connecting to Server...") {
             @Override
-            public void run() {
-                try {
-                    KOSInterface.connect();
-                    jLabel3.setText("Status: Selecting CPU...");
-                    while(true){
-                        if(KOSInterface.ready)
-                        {
-                            jLabel3.setText("Status: Connected!");
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException ex) {
-                                Logger.getLogger(KOSConnect.class.getName()).log(Level.SEVERE, null, ex);
+            public void runInThread() throws Throwable {
+                KOSInterface.connect();
+                completeProgress();
+                
+                while(true){
+                    if(KOSInterface.ready)
+                    {
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                jLabel3.setText("Status: Connected!");
                             }
-                            ui.connected();
-                            dispose();
-                            break;
-                        }
+                        });
+                        
                         try {
-                            Thread.sleep(100);
+                            Thread.sleep(1000);
                         } catch (InterruptedException ex) {
                             Logger.getLogger(KOSConnect.class.getName()).log(Level.SEVERE, null, ex);
                         }
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                ui.connected();
+                                dispose();
+                            }
+                        });
+                                
+                        break;
                     }
-                } catch (IOException ex) {
-                    Logger.getLogger(KOSConnect.class.getName()).log(Level.SEVERE, null, ex);
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(KOSConnect.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 }
-            
             }
-        }).start();
+            @Override
+            public void runInUI(Throwable error) {
+                if(error == null)
+                    JOptionPane.showMessageDialog(KOSConnect.this, "Hopefully everything went well.", "Connection Closed", JOptionPane.INFORMATION_MESSAGE);
+                else
+                    JOptionPane.showMessageDialog(KOSConnect.this, error.toString(), "Connection Closed", JOptionPane.ERROR_MESSAGE);
+            }
+        }.run();
     }//GEN-LAST:event_jButton1ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
