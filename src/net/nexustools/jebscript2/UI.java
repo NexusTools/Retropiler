@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rsyntaxtextarea.Theme;
@@ -41,24 +42,6 @@ public class UI extends javax.swing.JFrame {
      * Creates new form UI
      */
     public UI() {
-        if (new File(".autosave").exists()){
-            try{
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            InputStream in = new FileInputStream(new File(".autosave"));
-            }catch(Throwable t){}
-        }
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while(true){
-                    try {
-                        Thread.sleep(10000);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(UI.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-            }
-        }).start();
         textarea = new RSyntaxTextArea(20, 60);
         textarea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
         textarea.setCodeFoldingEnabled(true);
@@ -70,27 +53,6 @@ public class UI extends javax.swing.JFrame {
         } catch (IOException ioe) {
            ioe.printStackTrace();
         }
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                boolean ls = false;
-                while(true){
-                    if(ls != KOSInterface.constat){
-                        ls = KOSInterface.constat;
-//                        jRadioButton1.setSelected(ls);
-//                        jLabel2.setText(kosinterface.btr + "b received, " + kosinterface.bts + "b sent.");
-//                        repaint();
-//                        System.out.println("CHANGED");
-                    }
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(UI.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-            }
-            
-        }).start();
         setLocationRelativeTo(null);
     }
 
@@ -167,6 +129,11 @@ public class UI extends javax.swing.JFrame {
         jMenu1.add(jSeparator1);
 
         jMenuItem13.setText("Quit");
+        jMenuItem13.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItem13ActionPerformed(evt);
+            }
+        });
         jMenu1.add(jMenuItem13);
 
         jMenuBar1.add(jMenu1);
@@ -305,24 +272,48 @@ public class UI extends javax.swing.JFrame {
     }//GEN-LAST:event_jMenuItem5ActionPerformed
 
     private void jMenuItem12ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem12ActionPerformed
-        try {
-            new Preview(Parser.compile(textarea.getText()), this).setVisible(true);
-        } catch (IOException ex) {
-            Logger.getLogger(UI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        new Task(this, "Compiling Script...") {
+            String compiled;
+            String source = textarea.getText();
+            @Override
+            public void runInThread() throws IOException {
+                compiled = Parser.compile(source);
+            }
+            @Override
+            public void runInUI(Throwable error) {
+                if(error == null)
+                    new Preview(compiled, UI.this).setVisible(true);
+                else
+                    JOptionPane.showMessageDialog(UI.this, error.toString(), "Error Occured", JOptionPane.ERROR_MESSAGE);
+            }
+        }.run();
     }//GEN-LAST:event_jMenuItem12ActionPerformed
 
     private void mnuExecuteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuExecuteActionPerformed
-        try {
-            KOSInterface.exec(Parser.compile(textarea.getText()));
-        } catch (IOException ex) {
-            Logger.getLogger(UI.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        new Task(this, "Compiling JebScript...") {
+            @Override
+            public void runInThread() throws Throwable {
+                String compiled = Parser.compile(textarea.getText());
+                updateText("Uploading JebScript...");
+                KOSInterface.exec(compiled);
+            }
+            @Override
+            public void runInUI(Throwable error) {
+                if(error == null)
+                    JOptionPane.showMessageDialog(UI.this, "Hurrah!", "Upload Complete", JOptionPane.INFORMATION_MESSAGE);
+                else
+                    JOptionPane.showMessageDialog(UI.this, error.toString(), "Error Occured", JOptionPane.ERROR_MESSAGE);
+            }
+        };
     }//GEN-LAST:event_mnuExecuteActionPerformed
 
     private void mnuDisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDisconnectActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_mnuDisconnectActionPerformed
+
+    private void jMenuItem13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem13ActionPerformed
+        System.exit(0);
+    }//GEN-LAST:event_jMenuItem13ActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton5;

@@ -17,6 +17,7 @@
 package net.nexustools.jebscript2;
 
 import java.awt.Component;
+import java.awt.Window;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Level;
@@ -30,14 +31,16 @@ import org.fife.ui.rtextarea.RTextScrollPane;
  *
  * @author aero
  */
-public class Preview extends javax.swing.JFrame {
+public class Preview extends javax.swing.JDialog {
 
     
     RSyntaxTextArea textarea;
     /**
      * Creates new form UI
      */
-    public Preview(String src, Component parent) {
+    public Preview(String src, Window parent) {
+        super(parent);
+        setTitle("JebScript Preview");
         
         textarea = new RSyntaxTextArea(20, 60);
         textarea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT);
