@@ -47,18 +47,18 @@
         return input;
     }
 }
-@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\+\+;?$/ $1set $2 to $2 + 1.
-@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\+=\s*(\-?\d+(\.\d+)?);?$/ $1set $2 to $2 + $3.
-@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*--;?$/ $1set $2 to $2 - 1.
-@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\-=\s*(\-?\d+(\.\d+)?);?$/ $1set $2 to $2 - $3.
-@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\*=\s*(\-?\d+(\.\d+)?);?$/ $1set $2 to $2 * $3.
-@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\\=\s*(\-?\d+(\.\d+)?);?$/ $1set $2 to $2 \ $3.
-@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*&=\s*(\-?\d+(\.\d+)?);?$/ $1set $2 to $2 and $3.
-@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*%=\s*(\-?\d+(\.\d+)?);?$/ $1set $2 to $2 % $3.
-@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\^=\s*(\-?\d+(\.\d+)?);?$/ $1set $2 to $2 ^ $3.
-@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\|=\s*(\-?\d+(\.\d+)?);?$/ $1set $2 to $2 or $3.
-@ReplaceRegex /^(\s*)var\s+([_a-z0-9A-Z]+)\s*=\s*(.+?);?$/ $1local $2 is $3.
-@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*=\s*(.+?);?$/ $1set $2 to $3.
+@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\+\+\s*;?\s*$/ $1set $2 to $2 + 1.
+@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\+=\s*(\-?\d+(\.\d+)?)\s*;?\s*$/ $1set $2 to $2 + $3.
+@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*--\s*;?\s*$/ $1set $2 to $2 - 1.
+@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\-=\s*(\-?\d+(\.\d+)?)\s*;?\s*$/ $1set $2 to $2 - $3.
+@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\*=\s*(\-?\d+(\.\d+)?)\s*;?\s*$/ $1set $2 to $2 * $3.
+@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\\=\s*(\-?\d+(\.\d+)?)\s*;?\s*$/ $1set $2 to $2 \ $3.
+@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*&=\s*(\-?\d+(\.\d+)?)\s*;?\s*$/ $1set $2 to $2 and $3.
+@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*%=\s*(\-?\d+(\.\d+)?)\s*;?\s*$/ $1set $2 to $2 % $3.
+@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\^=\s*(\-?\d+(\.\d+)?)\s*;?\s*$/ $1set $2 to $2 ^ $3.
+@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\|=\s*(\-?\d+(\.\d+)?)\s*;?\s*$/ $1set $2 to $2 or $3.
+@ReplaceRegex /^(\s*)var\s+([_a-z0-9A-Z]+)\s*=\s*(.+?)\s*;?\s*$/ $1local $2 is $3.
+@ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*=\s*(.+?)\s*;?\s*$/ $1set $2 to $3.
 @ReplaceLine {
     return input.replace(/;$/g, ".");
 }

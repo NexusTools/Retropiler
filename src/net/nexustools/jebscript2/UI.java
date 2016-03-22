@@ -114,9 +114,9 @@ public class UI extends javax.swing.JFrame {
         jMenuItem5 = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
         jMenuItem13 = new javax.swing.JMenuItem();
-        mnuConnect = new javax.swing.JMenu();
+        mnukOS = new javax.swing.JMenu();
+        mnuConnect = new javax.swing.JMenuItem();
         mnuDisconnect = new javax.swing.JMenuItem();
-        jMenuItem14 = new javax.swing.JMenuItem();
         mnuExecute = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
         jMenuItem9 = new javax.swing.JMenuItem();
@@ -125,7 +125,7 @@ public class UI extends javax.swing.JFrame {
         jMenuItem1 = new javax.swing.JMenuItem();
         jMenu3 = new javax.swing.JMenu();
         jMenuItem8 = new javax.swing.JMenuItem();
-        jMenu4 = new javax.swing.JMenu();
+        mnuStatus = new javax.swing.JMenu();
 
         jButton5.setText("jButton5");
 
@@ -171,19 +171,24 @@ public class UI extends javax.swing.JFrame {
 
         jMenuBar1.add(jMenu1);
 
-        mnuConnect.setText("kOS");
+        mnukOS.setText("kOS");
 
-        mnuDisconnect.setText("Connect...");
+        mnuConnect.setText("Connect...");
+        mnuConnect.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuConnectActionPerformed(evt);
+            }
+        });
+        mnukOS.add(mnuConnect);
+
+        mnuDisconnect.setText("Disconnect");
+        mnuDisconnect.setEnabled(false);
         mnuDisconnect.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 mnuDisconnectActionPerformed(evt);
             }
         });
-        mnuConnect.add(mnuDisconnect);
-
-        jMenuItem14.setText("Disconnect");
-        jMenuItem14.setEnabled(false);
-        mnuConnect.add(jMenuItem14);
+        mnukOS.add(mnuDisconnect);
 
         mnuExecute.setText("Execute");
         mnuExecute.setEnabled(false);
@@ -192,9 +197,9 @@ public class UI extends javax.swing.JFrame {
                 mnuExecuteActionPerformed(evt);
             }
         });
-        mnuConnect.add(mnuExecute);
+        mnukOS.add(mnuExecute);
 
-        jMenuBar1.add(mnuConnect);
+        jMenuBar1.add(mnukOS);
 
         jMenu2.setText("Edit");
 
@@ -230,9 +235,9 @@ public class UI extends javax.swing.JFrame {
 
         jMenuBar1.add(jMenu3);
 
-        jMenu4.setText("Status: disconnected.");
-        jMenu4.setEnabled(false);
-        jMenuBar1.add(jMenu4);
+        mnuStatus.setText("Status: disconnected.");
+        mnuStatus.setEnabled(false);
+        jMenuBar1.add(mnuStatus);
 
         setJMenuBar(jMenuBar1);
 
@@ -254,11 +259,11 @@ public class UI extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void mnuDisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDisconnectActionPerformed
+    private void mnuConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuConnectActionPerformed
         KOSConnect p = new KOSConnect(this);
         p.setLocationRelativeTo(this);
         p.setVisible(true);
-    }//GEN-LAST:event_mnuDisconnectActionPerformed
+    }//GEN-LAST:event_mnuConnectActionPerformed
 
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
 
@@ -315,18 +320,20 @@ public class UI extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_mnuExecuteActionPerformed
 
+    private void mnuDisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDisconnectActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_mnuDisconnectActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton5;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenu jMenu3;
-    private javax.swing.JMenu jMenu4;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JMenuItem jMenuItem10;
     private javax.swing.JMenuItem jMenuItem12;
     private javax.swing.JMenuItem jMenuItem13;
-    private javax.swing.JMenuItem jMenuItem14;
     private javax.swing.JMenuItem jMenuItem2;
     private javax.swing.JMenuItem jMenuItem3;
     private javax.swing.JMenuItem jMenuItem4;
@@ -336,17 +343,20 @@ public class UI extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPopupMenu.Separator jSeparator1;
-    private javax.swing.JMenu mnuConnect;
+    private javax.swing.JMenuItem mnuConnect;
     private javax.swing.JMenuItem mnuDisconnect;
     private javax.swing.JMenuItem mnuExecute;
+    private javax.swing.JMenu mnuStatus;
+    private javax.swing.JMenu mnukOS;
     // End of variables declaration//GEN-END:variables
     
     boolean connected = false;
     
     void connected() {
-        jMenu4.setText("Status: Connected");
+        mnuStatus.setText("Status: Connected");
         mnuConnect.setEnabled(false);
         mnuDisconnect.setEnabled(true);
+        mnuExecute.setEnabled(true);
         connected = true;
     }
     
