@@ -47,6 +47,9 @@
         return input;
     }
 }
+@ReplaceRegex /([\s\)\w])===?([\s\w])/ $1=$2
+@ReplaceRegex /([\s\)])\|\|(\s)/ $1OR$2
+@ReplaceRegex /([\s\)])&&(\s)/ $1AND$2
 @ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\+\+\s*;?\s*$/ $1set $2 to $2 + 1.
 @ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*\+=\s*(\-?\d+(\.\d+)?)\s*;?\s*$/ $1set $2 to $2 + $3.
 @ReplaceRegex /^(\s*)([_a-z0-9A-Z]+)\s*--\s*;?\s*$/ $1set $2 to $2 - 1.

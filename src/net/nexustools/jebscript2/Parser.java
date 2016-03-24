@@ -83,11 +83,19 @@ public class Parser {
             Matcher matcher = pattern.matcher(input);
             if(matcher.matches()) {
                 String output = replacement;
-                for(int i=0; i<=matcher.groupCount(); i++)
+                for(int i=1; i<=matcher.groupCount(); i++)
                     output = output.replace("$" + i, matcher.group(i));
                 return output;
+            } else {
+                String output = input;
+                while(matcher.find()) {
+                    String replaced = replacement;
+                    for(int i=1; i<=matcher.groupCount(); i++)
+                        replaced = replaced.replace("$" + i, matcher.group(i));
+                    output = output.substring(0, matcher.start()) + replaced + output.substring(matcher.end());
+                }
+                return output;
             }
-            return input;
         }
     }
     

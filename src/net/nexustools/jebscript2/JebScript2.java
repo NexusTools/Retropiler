@@ -16,6 +16,7 @@
  */
 package net.nexustools.jebscript2;
 
+import com.github.mibrahim.praxislaf.PraxisLookAndFeel;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.UIManager;
@@ -35,7 +36,7 @@ public class JebScript2 {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
-                    UIManager.setLookAndFeel("com.github.mibrahim.praxislaf.PraxisLookAndFeel");
+                    UIManager.setLookAndFeel(PraxisLookAndFeel.class.getName());
                 } catch (ClassNotFoundException ex) {
                     Logger.getLogger(JebScript2.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (InstantiationException ex) {
