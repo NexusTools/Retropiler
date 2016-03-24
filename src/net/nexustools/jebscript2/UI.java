@@ -291,9 +291,11 @@ public class UI extends javax.swing.JFrame {
 
     private void mnuExecuteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuExecuteActionPerformed
         new Task(this, "Compiling JebScript...") {
+            String source = textarea.getText();
             @Override
             public void runInThread() throws Throwable {
-                String compiled = Parser.compile(textarea.getText());
+                String compiled = Parser.compile(source);
+                System.out.println("Compiled script: " + compiled);
                 updateText("Uploading JebScript...");
                 KOSInterface.exec(compiled);
             }
@@ -304,7 +306,7 @@ public class UI extends javax.swing.JFrame {
                 else
                     JOptionPane.showMessageDialog(UI.this, error.toString(), "Error Occured", JOptionPane.ERROR_MESSAGE);
             }
-        };
+        }.run();
     }//GEN-LAST:event_mnuExecuteActionPerformed
 
     private void mnuDisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDisconnectActionPerformed

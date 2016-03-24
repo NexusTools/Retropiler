@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -83,6 +84,7 @@ public class KOSInterface {
                         }else if(sready){
 //                            System.err.println(r);
                             ready = true;
+                            System.err.println("Proceed");
                         }
 //                        System.err.println(r);
                         System.err.write(r);
@@ -103,29 +105,45 @@ public class KOSInterface {
     }
     public static long bts = 0, btr = 0;
     public static void exec(String commands) throws IOException{
+        System.out.println(commands);
+        
+        
         int t = 0;
-        while(!ready)
-            try {
-                Thread.sleep(10);
-                t++;
-                if(t==100) ready = true;
-            } catch (InterruptedException ex) {
-                Logger.getLogger(KOSInterface.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        if(!ready) {
+            System.out.println("Waiting until Ready");
+            while(!ready)
+                try {
+                    Thread.sleep(10);
+                    t++;
+                    if(t==100) ready = true;
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(KOSInterface.class.getName()).log(Level.SEVERE, null, ex);
+                }
+        }
 //        out.write(commands.getBytes());
-        for(byte b : commands.getBytes()){
-            bts++;
-            constat = !constat;
-            out.write(b);
+
+    Scanner scanner = new Scanner(commands);
+    while (scanner.hasNextLine()) {
+        String line = scanner.nextLine();
+        if(!line.isEmpty())
+            out.write((line + "\r\n").getBytes("utf8"));
+    }
+    scanner.close();
+
+        //out.write(commands.getBytes("utf8"));
+//        for(byte b : commands.getBytes("utf8")){
+//            bts++;
+//            constat = !constat;
+//            out.write(b);
 //            try {
 //                Thread.sleep(3);
 //            } catch (InterruptedException ex) {
 //                Logger.getLogger(KOSInterface.class.getName()).log(Level.SEVERE, null, ex);
 //            }
-        }
+//        }
         bts+=4;
         constat = true;
-        out.write("\r\n\r\n".getBytes());
+        out.write("\r\n\r\n".getBytes("utf8"));
         out.flush();
     }
 }

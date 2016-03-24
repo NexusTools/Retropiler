@@ -224,9 +224,7 @@ public class KOSConnect extends javax.swing.JDialog {
             }
             @Override
             public void runInUI(Throwable error) {
-                if(error == null)
-                    JOptionPane.showMessageDialog(KOSConnect.this, "Hopefully everything went well.", "Connection Closed", JOptionPane.INFORMATION_MESSAGE);
-                else
+                if(error != null)
                     JOptionPane.showMessageDialog(KOSConnect.this, error.toString(), "Connection Closed", JOptionPane.ERROR_MESSAGE);
             }
         }.run();

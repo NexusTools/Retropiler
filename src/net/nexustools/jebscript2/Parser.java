@@ -1,32 +1,19 @@
 /*
- * Copyright (C) 2016 NexusTools
- *
- * Retropiler is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, version 3 or any later version.
- * 
- * Retropiler is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License
- * along with Retropiler.  If not, see <http://www.gnu.org/licenses/>.
- * 
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
  */
 package net.nexustools.jebscript2;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.script.Bindings;
@@ -39,14 +26,14 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 /**
- * @author kate
+ * @author aero
  */
 public class Parser {
     
-    public static String compile(String source) throws IOException{
+    public static String compile(String base) throws IOException{
         ByteArrayOutputStream result = new ByteArrayOutputStream();
         PrintStream p = new PrintStream(result, true);
-        parse(new BufferedReader(new StringReader(source)), p);
+        parse(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(base.getBytes()))), p);
         return new String(result.toByteArray());
     }
     
@@ -59,10 +46,25 @@ public class Parser {
     public static final Pattern BRACKET = Pattern.compile("[\\{\\}\"'/]");
     
     public static final ScriptEngine SCRIPT_ENGINE;
+    public static final CompiledScript BOOTSTRAP;
     static {
         ScriptEngineManager manager = new ScriptEngineManager();
         SCRIPT_ENGINE = manager.getEngineByMimeType("text/javascript");
-        Logger.getLogger(Parser.class.getName()).log(Level.INFO, "Using {0} to provide JavaScript integraiton.", SCRIPT_ENGINE.getClass().getName());
+        
+        Compilable compilingEngine = (Compilable) SCRIPT_ENGINE;
+        try {
+            InputStreamReader reader = new InputStreamReader(Parser.class.getResourceAsStream("/bootstrap.js"));
+            StringBuilder builder = new StringBuilder();
+            char[] buffer = new char[1024];
+            
+            int read;
+            while((read = reader.read(buffer)) > 0)
+                builder.append(buffer, 0, read);
+            
+            BOOTSTRAP = compilingEngine.compile(builder.toString());
+        } catch (IOException | ScriptException ex) {
+            throw new RuntimeException(ex);
+        }
     }
     
     public static interface Replacer {
@@ -161,14 +163,9 @@ public class Parser {
                 
                 final Bindings bindings = SCRIPT_ENGINE.createBindings();
                 try {
+                    BOOTSTRAP.eval(bindings);
                     cscript.eval(bindings);
                 } catch (ScriptException ex) {
-                    throw new RuntimeException(ex);
-                }
-                SCRIPT_ENGINE.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
-                try {
-                    ((Invocable)SCRIPT_ENGINE).invokeFunction("replace", "Test");
-                } catch (NoSuchMethodException | ScriptException  ex) {
                     throw new RuntimeException(ex);
                 }
                 
@@ -178,7 +175,9 @@ public class Parser {
                         SCRIPT_ENGINE.setBindings(bindings, ScriptContext.ENGINE_SCOPE);
                         try {
                             return ((Invocable)SCRIPT_ENGINE).invokeFunction("replace", input).toString();
-                        } catch (ScriptException | NoSuchMethodException ex) {
+                        } catch (ScriptException ex) {
+                            throw new RuntimeException(ex);
+                        } catch (NoSuchMethodException ex) {
                             throw new RuntimeException(ex);
                         }
                     }
