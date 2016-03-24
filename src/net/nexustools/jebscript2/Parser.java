@@ -81,12 +81,12 @@ public class Parser {
         @Override
         public String replace(String input) {
             Matcher matcher = pattern.matcher(input);
-            if(matcher.matches()) {
+            /*if(matcher.matches()) {
                 String output = replacement;
                 for(int i=1; i<=matcher.groupCount(); i++)
                     output = output.replace("$" + i, matcher.group(i));
                 return output;
-            } else {
+            } else {*/
                 String output = input;
                 while(matcher.find()) {
                     String replaced = replacement;
@@ -95,7 +95,7 @@ public class Parser {
                     output = output.substring(0, matcher.start()) + replaced + output.substring(matcher.end());
                 }
                 return output;
-            }
+            //}
         }
     }
     
