@@ -64,8 +64,8 @@ public class kOSClient {
     
     private char[][] screen;
     private boolean tryAgain;
+    private int desiredCPU;
     private int currentCPU = -1;
-    private int desiredCPU, switchingCPU;
     private final TelnetClient telnet;
     private final ArrayList<DisconnectListener> disconnectListeners = new ArrayList();
     private final ArrayList<FailureToSwitchCPUListener> failedToSwitchListeners = new ArrayList();
@@ -150,7 +150,7 @@ public class kOSClient {
         }
     }
     
-    private int curX, curY;
+    private int curX, curY, scanY;
     private void print(char c) {
         if(c == '\r')
             return;
@@ -181,11 +181,15 @@ public class kOSClient {
             screen[y] = screen[y+1];
         }
         screen[23] = new char[80];
+        scanY--;
+        if(scanY < 0)
+            scanY = 0;
     }
     
     private void resetScreen() {
         curX = curY = 0;
         synchronized(this) {
+            scanY = 0;
             screen = new char[24][];
             for(int y=0; y<24; y++) {
                 char line[] = screen[y] = new char[80];
@@ -208,6 +212,7 @@ public class kOSClient {
             byte[] command = new byte[3];
             byte[] buffer = new byte[1024];
             while((read = in.read(buffer)) > 0) {
+                boolean screenCleared = false;
                 boolean containsInvalid = false;
                 for(int i=0; i<read; i++) {
                     char c = (char)(buffer[i]&0xFF);
@@ -236,47 +241,23 @@ public class kOSClient {
                                     try {
                                         switch((command[0]&0xFF)) {
                                             case 238:
-                                                if((command[1]&0xFF) == 128 && ((command[2]&0xFF) == 130 || (switchingCPU > 0 && ((command[2]&0xFF) == 142 || (command[2]&0xFF) == 134)))){
-                                                    LOG.info(" -- SCREEN RESET -- ");
-                                                    if(switchingCPU > 0) {
-                                                        int cpu;
-                                                        synchronized(kOSClient.this) {
-                                                            LOG.log(Level.INFO, "Selected CPU: {0}", desiredCPU);
-                                                            cpu = currentCPU = switchingCPU;
-                                                            switchingCPU = desiredCPU = 0;
-                                                        }
-                                                        synchronized(cpuChangedListeners) {
-                                                            for(CPUChangedListener listener : cpuChangedListeners)
-                                                                listener.onCPUChange(cpu);
-                                                        }
-                                                    } else {
+                                                if((command[1]&0xFF) == 128){
+                                                    if((command[2]&0xFF) == 130) {
+                                                        LOG.info(" -- SCREEN RESET -- ");
+                                                        screenCleared = true;
                                                         resetScreen();
-                                                        int current = -1;
-                                                        synchronized(kOSClient.this) {
-                                                            LOG.log(Level.INFO, "Selecting CPU: {0}, current is {1}", new Object[]{desiredCPU, currentCPU});
-                                                            if(desiredCPU == 0) {
-                                                                currentCPU = current = 0;
-                                                            } else {
-                                                                tryAgain = true;
-                                                                switchingCPU = desiredCPU;
-                                                                if(desiredCPU != currentCPU) {
-                                                                    if(currentCPU == -1) {
-                                                                        LOG.info("Got Menu!");
-                                                                        currentCPU = 0;
-                                                                    }
-                                                                    current = currentCPU;
-                                                                }
-                                                            }
-                                                        }
-
-                                                        if(current > -1) {
-                                                            synchronized(cpuChangedListeners) {
-                                                                for(CPUChangedListener listener : cpuChangedListeners)
-                                                                    listener.onCPUChange(current);
-                                                            }
-                                                        }
+                                                        continue;
+                                                    } else if((command[2]&0xFF) == 134) {
+                                                        command[0] = command[2];
+                                                        commandPos = 0;
+                                                        continue;
                                                     }
-                                                    continue;
+                                                }
+                                                
+                                            case 134:
+                                                synchronized(kOSClient.this) {
+                                                    curX = Math.min(79, command[2]&0xFF);
+                                                    curY = Math.min(23, command[1]&0xFF);
                                                 }
                                         }
                                         LOG.log(Level.INFO, "Unknown Command: {0}, {1}, {2}", new Object[]{command[0]&0xFF, command[1]&0xFF, command[2]&0xFF});
@@ -285,18 +266,21 @@ public class kOSClient {
                                         command[0] = 0;
                                     }
                                 }
-                            }
-                            
-                            if(t == 238) {
-                                command[0] = by;
-                                commandPos = 0;
-                                continue;
-                            }
+                            } else {
+                                if(t == 238 || t == 134) {
+                                    command[0] = by;
+                                    commandPos = 0;
+                                    continue;
+                                }
 
-                            b.append('[');
-                            b.append(t);
-                            b.append(']');
-                            print(c);
+                                if(t == 128)
+                                    continue;
+
+                                b.append('[');
+                                b.append(t);
+                                b.append(']');
+                                print(c);
+                            }
                         }
                     }
                     if(b.length() > 0) {
@@ -320,19 +304,55 @@ public class kOSClient {
                             listener.onScreenUpdate();
                     }
                 }
-                if(switchingCPU > 0) {
-                    if(tryAgain) {
-                        tryAgain = false;
+                if(screenCleared) {
+                    int switched = -1;
+                    boolean inMainMenu = false;
+                    synchronized(kOSClient.this) {
+                        scanY = 0;
+                        while(scanY <= curY) {
+                            String line = new String(screen[scanY++]);
+                            LOG.log(Level.INFO, "Scanning: {0}: {1}", new Object[]{scanY, line});
+                            if(TERMINAL_TYPE.matcher(line).matches()) {
+                                inMainMenu = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if(inMainMenu) {
+                        int desired = 0;
+                        synchronized(kOSClient.this) {
+                            if(currentCPU != 0) {
+                                currentCPU = desiredCPU = 0;
+                                switched = 0;
+                            } else if(desiredCPU > 0) {
+                                desired = desiredCPU;
+                                desiredCPU = 0;
+                            }
+                                
+                        }
+                        if(desired > 0)
+                            synchronized(failedToSwitchListeners) {
+                                for(FailureToSwitchCPUListener listener : failedToSwitchListeners)
+                                    listener.onFailureToSwitchCPU(desired);
+                            }
+                    
                     } else {
                         synchronized(kOSClient.this) {
-                            desiredCPU = 0;
+                            if(desiredCPU > 0) {
+                                switched = currentCPU = desiredCPU;
+                                desiredCPU = 0;
+                            }
+                            if(currentCPU < 0)
+                                throw new RuntimeException("Expected Main Menu, kOS Version may be Incompatible.");
                         }
-                        synchronized(failedToSwitchListeners) {
-                            for(FailureToSwitchCPUListener listener : failedToSwitchListeners)
-                                listener.onFailureToSwitchCPU(switchingCPU);
-                        }
-                        switchingCPU = 0;
                     }
+                    
+                    if(switched > -1)
+                        synchronized(cpuChangedListeners) {
+                            for(CPUChangedListener listener : cpuChangedListeners)
+                                listener.onCPUChange(switched);
+                        }
                 }
             }
             LOG.info("Disconnected from Telnet");
@@ -379,6 +399,7 @@ public class kOSClient {
     
     private static final Pattern EMPTY_LINE = Pattern.compile("^\\s*$");
     private static final Pattern COMMENT_LINE = Pattern.compile("^\\s*//$");
+    private static final Pattern TERMINAL_TYPE = Pattern.compile("^Terminal: type = (INITIAL_UNSET|VT100), size = \\d+x\\d+\\s*$");
     public void execute(String commands) {
         synchronized(this) {
             if(desiredCPU > 0)
