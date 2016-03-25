@@ -148,6 +148,52 @@ public class kOSClient {
         }
     }
     
+    private int curX, curY;
+    private void print(char c) {
+        if(c == '\r')
+            return;
+        
+        synchronized(this) {
+            if(c == '\n')
+                newLine();
+            else {
+                screen[curY][curX] = c;
+                curX ++;
+                if(curX >= 80)
+                    newLine();
+            }
+        }
+    }
+    
+    private void newLine() {
+        curX = 0;
+        curY ++;
+        if(curY >= 24) {
+            curY --;
+            scrollUp();
+        }
+    }
+    
+    private void scrollUp() {
+        for(int y=0; y<23; y++) {
+            screen[y] = screen[y+1];
+        }
+        screen[23] = new char[80];
+    }
+    
+    private void resetScreen() {
+        curX = curY = 0;
+        synchronized(this) {
+            screen = new char[24][];
+            for(int y=0; y<24; y++) {
+                char line[] = screen[y] = new char[80];
+                for(int x = 0; x < 80; x ++) {
+                    line[x] = ' ';
+                }
+            }
+        }
+    }
+    
     public void connect(final String host, final int port) throws IOException {
         try {
             LOG.info("Connecting to Telnet...");
@@ -155,6 +201,7 @@ public class kOSClient {
             InputStream in = telnet.getInputStream();
 
             int read;
+            resetScreen();
             byte[] buffer = new byte[1024];
             while((read = in.read(buffer)) > 0) {
                 boolean containsInvalid = false;
@@ -173,10 +220,12 @@ public class kOSClient {
                         if(t == 1)
                             continue;
 
-                        if(isValid(c))
+                        if(isValid(c)) {
                             b.append(c);
-                        else {
+                            print(c);
+                        } else {
                             if(t == 238) {
+                                //resetScreen();
                                 LOG.info(" -- SCREEN RESET -- ");
                                 if(switchingCPU > 0) {
                                     int cpu;
@@ -229,8 +278,22 @@ public class kOSClient {
                         System.out.print(b.toString());
                         System.out.flush();
                     }
-                } else
+                    synchronized(screenUpdateListeners) {
+                        for(ScreenUpdateListener listener : screenUpdateListeners)
+                            listener.onScreenUpdate();
+                    }
+                } else {
                     System.out.write(buffer, 0, read);
+                    System.out.flush();
+                    
+                    for(int i=0; i<read; i++)
+                        print((char)(buffer[i]&0xFF));
+                    
+                    synchronized(screenUpdateListeners) {
+                        for(ScreenUpdateListener listener : screenUpdateListeners)
+                            listener.onScreenUpdate();
+                    }
+                }
                 if(switchingCPU > 0) {
                     synchronized(kOSClient.this) {
                         desiredCPU = 0;

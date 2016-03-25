@@ -23,9 +23,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 import net.nexustools.jebscript2.kOSClient.DisconnectListener;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
@@ -87,6 +90,7 @@ public class UI extends javax.swing.JFrame {
         mnuCPU = new javax.swing.JMenu();
         mnuCPUConnect = new javax.swing.JMenuItem();
         mnuCPUDisconnect = new javax.swing.JMenuItem();
+        mnuViewer = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
         jMenuItem9 = new javax.swing.JMenuItem();
         jMenuItem10 = new javax.swing.JMenuItem();
@@ -194,6 +198,15 @@ public class UI extends javax.swing.JFrame {
         mnuCPU.add(mnuCPUDisconnect);
 
         mnukOS.add(mnuCPU);
+
+        mnuViewer.setText("Viewer");
+        mnuViewer.setEnabled(false);
+        mnuViewer.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuViewerActionPerformed(evt);
+            }
+        });
+        mnukOS.add(mnuViewer);
 
         jMenuBar1.add(mnukOS);
 
@@ -466,6 +479,18 @@ public class UI extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_mnuCPUConnectActionPerformed
 
+    private void mnuViewerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuViewerActionPerformed
+        synchronized(this) {
+            JDialog dialog = new JDialog(this, "Telnet Viewer", false);
+            dialog.setContentPane(new TelnetViewer(client));
+            dialog.pack();
+            dialog.setResizable(false);
+            dialog.setLocationRelativeTo(this);
+            dialog.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            dialog.setVisible(true);
+        }
+    }//GEN-LAST:event_mnuViewerActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton5;
     private javax.swing.JMenu jMenu1;
@@ -492,6 +517,7 @@ public class UI extends javax.swing.JFrame {
     private javax.swing.JMenuItem mnuDisconnect;
     private javax.swing.JMenuItem mnuExecute;
     private javax.swing.JMenu mnuStatus;
+    private javax.swing.JMenuItem mnuViewer;
     private javax.swing.JMenu mnukOS;
     // End of variables declaration//GEN-END:variables
     
@@ -503,6 +529,7 @@ public class UI extends javax.swing.JFrame {
         mnuDisconnect.setEnabled(true);
         mnuExecute.setEnabled(true);
         mnuCPU.setEnabled(true);
+        mnuViewer.setEnabled(true);
         connected = true;
     }
     
@@ -512,6 +539,7 @@ public class UI extends javax.swing.JFrame {
         mnuDisconnect.setEnabled(false);
         mnuExecute.setEnabled(false);
         mnuCPU.setEnabled(false);
+        mnuViewer.setEnabled(false);
         connected = false;
     }
     
