@@ -25,6 +25,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
+import net.nexustools.jebscript2.kOSClient.DisconnectListener;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 import org.fife.ui.rsyntaxtextarea.Theme;
@@ -37,7 +39,9 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 public class UI extends javax.swing.JFrame {
 
     
-    RSyntaxTextArea textarea;
+    private kOSClient client;
+    private RSyntaxTextArea textarea;
+    private boolean disconnecting;
     /**
      * Creates new form UI
      */
@@ -80,6 +84,9 @@ public class UI extends javax.swing.JFrame {
         mnuConnect = new javax.swing.JMenuItem();
         mnuDisconnect = new javax.swing.JMenuItem();
         mnuExecute = new javax.swing.JMenuItem();
+        mnuCPU = new javax.swing.JMenu();
+        mnuCPUConnect = new javax.swing.JMenuItem();
+        mnuCPUDisconnect = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
         jMenuItem9 = new javax.swing.JMenuItem();
         jMenuItem10 = new javax.swing.JMenuItem();
@@ -94,6 +101,7 @@ public class UI extends javax.swing.JFrame {
         jMenuItem7.setText("jMenuItem7");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Retropiler");
 
         jMenu1.setText("File");
 
@@ -166,6 +174,27 @@ public class UI extends javax.swing.JFrame {
         });
         mnukOS.add(mnuExecute);
 
+        mnuCPU.setText("CPU");
+        mnuCPU.setEnabled(false);
+
+        mnuCPUConnect.setText("Connect");
+        mnuCPUConnect.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCPUConnectActionPerformed(evt);
+            }
+        });
+        mnuCPU.add(mnuCPUConnect);
+
+        mnuCPUDisconnect.setText("Disconnect");
+        mnuCPUDisconnect.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCPUDisconnectActionPerformed(evt);
+            }
+        });
+        mnuCPU.add(mnuCPUDisconnect);
+
+        mnukOS.add(mnuCPU);
+
         jMenuBar1.add(mnukOS);
 
         jMenu2.setText("Edit");
@@ -227,9 +256,107 @@ public class UI extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void mnuConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuConnectActionPerformed
-        KOSConnect p = new KOSConnect(this);
+        kOSConnect p = new kOSConnect(this);
         p.setLocationRelativeTo(this);
         p.setVisible(true);
+        
+        final short _cpu = p.getAutoConnectCPU();
+        if(p.isAccepted()) {
+            disconnecting = false;
+            mnuConnect.setEnabled(false);
+            mnuStatus.setText("Status: Connecting");
+
+            new Task(this, "kOS Telnet Client") {
+                final Logger LOG = Logger.getLogger(UI.class.getName());
+                boolean selectingCPU;
+                
+                @Override
+                public void runInThread() throws Throwable {
+                    kOSClient cclient;
+                    synchronized(UI.this) {
+                        cclient = client = new kOSClient();
+                        final boolean[] connected = new boolean[]{false};
+                        client.addFailureToSwitchCPUListener(new kOSClient.FailureToSwitchCPUListener() {
+                            @Override
+                            public void onFailureToSwitchCPU(int cpu) {
+                                if(selectingCPU){
+                                    completeProgress();
+                                    LOG.log(Level.INFO, "Failed to Select CPU {0}", cpu);
+                                    selectingCPU = false;
+                                }
+                                SwingUtilities.invokeLater(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        JOptionPane.showMessageDialog(UI.this, "Failure to Switch CPU", "Unable to Select CPU " + cpu + ", Ensure that CPU is Available.", JOptionPane.ERROR_MESSAGE);
+                                    }
+                                });
+                            }
+                        });
+                        client.addCPUChangedListener(new kOSClient.CPUChangedListener() {
+                            @Override
+                            public void onCPUChange(final int cpu) {
+                                if(!connected[0]) {
+                                    LOG.log(Level.INFO, "Connected!");
+                                    SwingUtilities.invokeLater(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            connected();
+                                        }
+                                    });
+                                    if(_cpu > 0) {
+                                        updateText("Selecting CPU " + _cpu);
+                                        
+                                        selectingCPU = true;
+                                        client.selectCPU(_cpu);
+                                    } else
+                                        completeProgress();
+                                    connected[0] = true;
+                                }
+                                if(selectingCPU){
+                                    completeProgress();
+                                    selectingCPU = false;
+                                }
+                                final boolean onMenu = cpu == 0;
+                                SwingUtilities.invokeLater(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mnuCPUConnect.setEnabled(onMenu);
+                                        mnuCPUDisconnect.setEnabled(!onMenu);
+                                        mnuStatus.setText("Status: Connected to " + (cpu > 0 ? "CPU " + cpu : "Menu"));
+                                    }
+                                });
+                            }
+                        });
+                        client.addDisconnectListener(new kOSClient.DisconnectListener() {
+                            @Override
+                            public void onDisconnect() {
+                                synchronized(UI.this) {
+                                    client = null;
+                                }
+                                SwingUtilities.invokeLater(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        disconnect();
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    
+                    LOG.log(Level.INFO, "Connecting {0}:{1}", new Object[]{p.getHost(), p.getPort()});
+                    cclient.connect(p.getHost(), p.getPort());
+                }
+                @Override
+                public void runInUI(Throwable error) {
+                    if(error != null)
+                        JOptionPane.showMessageDialog(UI.this, error.toString(), "Error Occured", JOptionPane.ERROR_MESSAGE);
+                    else if(!disconnecting)
+                        JOptionPane.showMessageDialog(UI.this, "Connection Closed", "Connection was closed.", JOptionPane.INFORMATION_MESSAGE);
+                }
+            }.run();
+
+                        
+        }
     }//GEN-LAST:event_mnuConnectActionPerformed
 
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem1ActionPerformed
@@ -297,7 +424,7 @@ public class UI extends javax.swing.JFrame {
                 String compiled = Parser.compile(source);
                 System.out.println("Compiled script: " + compiled);
                 updateText("Uploading JebScript...");
-                KOSInterface.exec(compiled);
+                //KOSInterface.exec(compiled);
             }
             @Override
             public void runInUI(Throwable error) {
@@ -310,12 +437,34 @@ public class UI extends javax.swing.JFrame {
     }//GEN-LAST:event_mnuExecuteActionPerformed
 
     private void mnuDisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuDisconnectActionPerformed
-        // TODO add your handling code here:
+        disconnecting = true;
+        synchronized(this) {
+            client.disconnect();
+        }
+        mnuDisconnect.setEnabled(false);
     }//GEN-LAST:event_mnuDisconnectActionPerformed
 
     private void jMenuItem13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItem13ActionPerformed
         System.exit(0);
     }//GEN-LAST:event_jMenuItem13ActionPerformed
+
+    private void mnuCPUDisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCPUDisconnectActionPerformed
+        synchronized(this) {
+            client.deselectCPU();
+        }
+    }//GEN-LAST:event_mnuCPUDisconnectActionPerformed
+
+    private void mnuCPUConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCPUConnectActionPerformed
+        kOSConnectCPU connect = new kOSConnectCPU(this);
+        connect.setLocationRelativeTo(this);
+        connect.setVisible(true);
+        
+        if(connect.isAccepted()) {
+            synchronized(this) {
+                client.selectCPU(connect.getCPU());
+            }
+        }
+    }//GEN-LAST:event_mnuCPUConnectActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton5;
@@ -336,6 +485,9 @@ public class UI extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JPopupMenu.Separator jSeparator1;
+    private javax.swing.JMenu mnuCPU;
+    private javax.swing.JMenuItem mnuCPUConnect;
+    private javax.swing.JMenuItem mnuCPUDisconnect;
     private javax.swing.JMenuItem mnuConnect;
     private javax.swing.JMenuItem mnuDisconnect;
     private javax.swing.JMenuItem mnuExecute;
@@ -350,11 +502,17 @@ public class UI extends javax.swing.JFrame {
         mnuConnect.setEnabled(false);
         mnuDisconnect.setEnabled(true);
         mnuExecute.setEnabled(true);
+        mnuCPU.setEnabled(true);
         connected = true;
     }
     
     void disconnect() {
-        // TODO: Implement
+        mnuStatus.setText("Status: Disconnected");
+        mnuConnect.setEnabled(true);
+        mnuDisconnect.setEnabled(false);
+        mnuExecute.setEnabled(false);
+        mnuCPU.setEnabled(false);
+        connected = false;
     }
     
 }

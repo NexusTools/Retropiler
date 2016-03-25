@@ -43,11 +43,11 @@ function main() {
     doStage();
     while (1) {
         updateScreen();
-        if(state > 1 AND state < 6) {
-            steerGrav(1000, 50000);
+        if(state > 1 && state < 6) {
+            steerGrav(1000, 70000);
         }
         
-        if (state == 5 && altitude > 44000) {
+        if (state == 5 && altitude > 56000) {
             @RAW UNLOCK STEERING.
             @RAW UNLOCK THROTTLE.
             print("Ready for Instructions");
@@ -59,6 +59,11 @@ function main() {
                 setThrottle(1);
                 state = 5;
             } else {
+                if(lfuel < 1) {
+                    doStage();
+                    doStage();
+                    wait(1);
+                }
                 setThrottle((aposTarget - ETA:APOAPSIS) / aposTarget);
             }
         }

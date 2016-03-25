@@ -33,7 +33,7 @@ import javax.swing.SwingUtilities;
  * @author kate
  */
 public abstract class Task {
-    private static final Executor threadExecutor = Executors.newCachedThreadPool();
+    public static final Executor EXECUTOR = Executors.newCachedThreadPool();
     
     private final JDialog dialog;
     private final JLabel text;
@@ -73,7 +73,7 @@ public abstract class Task {
     public abstract void runInUI(Throwable error);
     
     public final static void executeThread(Runnable run) {
-        threadExecutor.execute(run);
+        EXECUTOR.execute(run);
     }
     public final static void executeUI(Runnable run) {
         SwingUtilities.invokeLater(run);
@@ -91,7 +91,7 @@ public abstract class Task {
     public final void run() {
         if(dialog != null)
             dialog.setVisible(true);
-        threadExecutor.execute(new Runnable() {
+        EXECUTOR.execute(new Runnable() {
             @Override
             public void run() {
                 try {
