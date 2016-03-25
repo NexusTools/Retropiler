@@ -279,7 +279,7 @@ public class UI extends javax.swing.JFrame {
             mnuConnect.setEnabled(false);
             mnuStatus.setText("Status: Connecting");
 
-            new Task(this, "kOS Telnet Client") {
+            new Task(this, "Connecting to kOS...") {
                 final Logger LOG = Logger.getLogger(UI.class.getName());
                 boolean selectingCPU;
                 
@@ -333,6 +333,7 @@ public class UI extends javax.swing.JFrame {
                                 SwingUtilities.invokeLater(new Runnable() {
                                     @Override
                                     public void run() {
+                                        mnuExecute.setEnabled(!onMenu);
                                         mnuCPUConnect.setEnabled(onMenu);
                                         mnuCPUDisconnect.setEnabled(!onMenu);
                                         mnuStatus.setText("Status: Connected to " + (cpu > 0 ? "CPU " + cpu : "Menu"));
@@ -361,9 +362,10 @@ public class UI extends javax.swing.JFrame {
                 }
                 @Override
                 public void runInUI(Throwable error) {
-                    if(error != null)
+                    if(error != null) {
+                        error.printStackTrace();
                         JOptionPane.showMessageDialog(UI.this, error.toString(), "Error Occured", JOptionPane.ERROR_MESSAGE);
-                    else if(!disconnecting)
+                    } else if(!disconnecting)
                         JOptionPane.showMessageDialog(UI.this, "Connection Closed", "Connection was closed.", JOptionPane.INFORMATION_MESSAGE);
                 }
             }.run();
@@ -435,9 +437,8 @@ public class UI extends javax.swing.JFrame {
             @Override
             public void runInThread() throws Throwable {
                 String compiled = Parser.compile(source);
-                System.out.println("Compiled script: " + compiled);
                 updateText("Uploading JebScript...");
-                //KOSInterface.exec(compiled);
+                client.execute(compiled);
             }
             @Override
             public void runInUI(Throwable error) {
@@ -527,7 +528,6 @@ public class UI extends javax.swing.JFrame {
         mnuStatus.setText("Status: Connected");
         mnuConnect.setEnabled(false);
         mnuDisconnect.setEnabled(true);
-        mnuExecute.setEnabled(true);
         mnuCPU.setEnabled(true);
         mnuViewer.setEnabled(true);
         connected = true;
